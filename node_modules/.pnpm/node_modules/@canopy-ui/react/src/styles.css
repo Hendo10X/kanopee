@@ -1,0 +1,291 @@
+/*
+  Canopy — CSS custom property API
+  All visual tokens are overridable. Nothing here requires Tailwind or CSS-in-JS.
+
+  Usage in your project:
+    :root {
+      --canopy-indent-width: 20px;
+      --canopy-accent-color: #6366f1;
+    }
+*/
+
+.canopy-thread {
+  /* Layout */
+  --canopy-indent-width: 24px;
+  --canopy-row-gap: 12px;
+  --canopy-avatar-size: 32px;
+  --canopy-avatar-radius: 50%;
+
+  /* Thread connector line */
+  --canopy-line-color: color-mix(in srgb, currentColor 15%, transparent);
+  --canopy-line-width: 2px;
+
+  /* Typography */
+  --canopy-font-family: inherit;
+  --canopy-font-size: 14px;
+  --canopy-line-height: 1.5;
+
+  /* Colors */
+  --canopy-bg: transparent;
+  --canopy-author-color: inherit;
+  --canopy-author-weight: 600;
+  --canopy-body-color: inherit;
+  --canopy-meta-color: color-mix(in srgb, currentColor 50%, transparent);
+  --canopy-action-color: color-mix(in srgb, currentColor 45%, transparent);
+  --canopy-action-hover-color: inherit;
+  --canopy-liked-color: #e5484d;
+  --canopy-liked-fill: #e5484d;
+
+  /* Reply form */
+  --canopy-input-bg: color-mix(in srgb, currentColor 5%, transparent);
+  --canopy-input-border: color-mix(in srgb, currentColor 15%, transparent);
+  --canopy-input-border-focus: color-mix(in srgb, currentColor 40%, transparent);
+  --canopy-input-radius: 6px;
+  --canopy-submit-bg: color-mix(in srgb, currentColor 90%, transparent);
+  --canopy-submit-color: canvas;
+  --canopy-submit-radius: 6px;
+
+  /* Misc */
+  --canopy-collapsed-opacity: 0.55;
+  --canopy-transition: 150ms ease;
+
+  /* Internal — do not override */
+  --_canopy-depth: 0;
+
+  position: relative;
+  background: var(--canopy-bg);
+  font-family: var(--canopy-font-family);
+  font-size: var(--canopy-font-size);
+  line-height: var(--canopy-line-height);
+  color: var(--canopy-body-color);
+}
+
+/* ── Virtualizer scroll container ─────────────────────────────── */
+.canopy-scroll {
+  overflow-y: auto;
+  will-change: transform;
+  outline: none;
+}
+
+/* ── Row ───────────────────────────────────────────────────────── */
+.canopy-row {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--canopy-row-gap);
+  /* Indentation is applied inline via --_canopy-depth * indent-width */
+}
+
+/* ── Comment bubble ────────────────────────────────────────────── */
+.canopy-comment {
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+/* Thread connector — drawn on left edge of avatar column */
+.canopy-comment[data-has-children]::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--canopy-avatar-size) / 2 + var(--_canopy-depth-px, 0px));
+  top: calc(var(--canopy-avatar-size) + 4px);
+  bottom: calc(-1 * var(--canopy-row-gap));
+  width: var(--canopy-line-width);
+  background: var(--canopy-line-color);
+  pointer-events: none;
+}
+
+.canopy-comment[data-collapsed]::after {
+  display: none;
+}
+
+/* ── Avatar ────────────────────────────────────────────────────── */
+.canopy-avatar {
+  flex-shrink: 0;
+  width: var(--canopy-avatar-size);
+  height: var(--canopy-avatar-size);
+  border-radius: var(--canopy-avatar-radius);
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--canopy-avatar-size) * 0.4);
+  font-weight: 600;
+  color: var(--canopy-meta-color);
+  user-select: none;
+}
+
+.canopy-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Content ───────────────────────────────────────────────────── */
+.canopy-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.canopy-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.canopy-author {
+  font-weight: var(--canopy-author-weight);
+  color: var(--canopy-author-color);
+}
+
+.canopy-timestamp {
+  font-size: 0.85em;
+  color: var(--canopy-meta-color);
+  white-space: nowrap;
+}
+
+.canopy-body {
+  color: var(--canopy-body-color);
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ── Actions bar ───────────────────────────────────────────────── */
+.canopy-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.canopy-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85em;
+  color: var(--canopy-action-color);
+  border-radius: 4px;
+  transition: color var(--canopy-transition), background var(--canopy-transition);
+  font-family: inherit;
+  line-height: 1;
+}
+
+.canopy-action:hover {
+  color: var(--canopy-action-hover-color);
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.canopy-action:focus-visible {
+  outline: 2px solid var(--canopy-input-border-focus);
+  outline-offset: 1px;
+}
+
+.canopy-action[aria-pressed='true'].canopy-action--like {
+  color: var(--canopy-liked-color);
+}
+
+.canopy-action--collapse {
+  margin-left: auto;
+  font-size: 0.8em;
+}
+
+.canopy-collapsed-hint {
+  font-size: 0.82em;
+  color: var(--canopy-meta-color);
+  opacity: var(--canopy-collapsed-opacity);
+  padding: 2px 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.canopy-collapsed-hint:hover {
+  opacity: 1;
+}
+
+/* ── Inline reply form ─────────────────────────────────────────── */
+.canopy-reply-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.canopy-reply-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: var(--canopy-input-bg);
+  border: 1px solid var(--canopy-input-border);
+  border-radius: var(--canopy-input-radius);
+  font-family: var(--canopy-font-family);
+  font-size: var(--canopy-font-size);
+  color: var(--canopy-body-color);
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color var(--canopy-transition);
+  outline: none;
+}
+
+.canopy-reply-input:focus {
+  border-color: var(--canopy-input-border-focus);
+}
+
+.canopy-reply-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.canopy-reply-submit {
+  padding: 6px 14px;
+  background: var(--canopy-submit-bg);
+  color: var(--canopy-submit-color);
+  border: none;
+  border-radius: var(--canopy-submit-radius);
+  font-family: var(--canopy-font-family);
+  font-size: var(--canopy-font-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--canopy-transition);
+}
+
+.canopy-reply-submit:hover {
+  opacity: 0.85;
+}
+
+.canopy-reply-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.canopy-reply-cancel {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid var(--canopy-input-border);
+  border-radius: var(--canopy-submit-radius);
+  font-family: var(--canopy-font-family);
+  font-size: var(--canopy-font-size);
+  color: var(--canopy-action-color);
+  cursor: pointer;
+  transition: border-color var(--canopy-transition);
+}
+
+.canopy-reply-cancel:hover {
+  border-color: var(--canopy-input-border-focus);
+  color: var(--canopy-action-hover-color);
+}
+
+/* ── Empty state ───────────────────────────────────────────────── */
+.canopy-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--canopy-meta-color);
+  font-size: var(--canopy-font-size);
+}
