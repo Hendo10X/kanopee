@@ -225,7 +225,7 @@ export function Landing() {
 
           <div style={{ display: 'flex', gap: 20, marginTop: 20, flexWrap: 'wrap' }}>
             <button
-              onClick={() => navigate('/docs')}
+              onClick={() => { window.scrollTo(0, 0); navigate('/docs'); }}
               style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, background: 'none', border: 'none', borderBottom: '1px solid var(--ui-border)', paddingBottom: 1, cursor: 'pointer', padding: 0 }}
             >
               Read the docs
@@ -548,7 +548,7 @@ function Dock({ active, mobile }: { active: string; mobile: boolean }) {
         ))}
 
       {/* Docs — SPA navigate */}
-      <button onClick={() => navigate('/docs')} style={btnStyle(false)}>
+      <button onClick={() => { window.scrollTo(0, 0); navigate('/docs'); }} style={btnStyle(false)}>
         Docs
       </button>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CommentThread,
   CommentAvatar,
@@ -22,7 +22,7 @@ const MUTED  = 'var(--ui-muted)';
 const SUBTLE = 'var(--ui-surface)';
 
 // ─── responsive hook ──────────────────────────────────────────────
-function useIsMobile(bp = 900) {
+function useIsMobile(bp = 768) {
   const [mobile, setMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < bp,
   );
@@ -340,18 +340,24 @@ export function Docs() {
   const [activeNav, setActiveNav]   = useState('installation');
   const [playComments, setPlayComments] = useState<RawComment[]>(SEED_COMMENTS.slice(0, 8));
 
-  // scroll to top on mount
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  // ref to the scrollable main container
+  const mainRef = useRef<HTMLElement>(null);
 
-  // highlight active section on scroll
+  // scroll to top on every mount (browser may restore scroll on SPA re-navigation)
   useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, []);
+
+  // highlight active section — observe within the main scroll container
+  useEffect(() => {
+    const container = mainRef.current;
     const allIds = NAV.flatMap((g) => g.items.map((i) => i.id));
     const obs = allIds.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
       const o = new IntersectionObserver(
         ([e]) => { if (e.isIntersecting) setActiveNav(id); },
-        { rootMargin: '-20% 0px -60% 0px', threshold: 0 },
+        { root: container, rootMargin: '-20% 0px -60% 0px', threshold: 0 },
       );
       o.observe(el);
       return o;
@@ -411,13 +417,13 @@ export function Docs() {
   } as React.CSSProperties;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: fKarla, background: 'var(--ui-bg)', color: 'var(--ui-text)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: fKarla, background: 'var(--ui-bg)', color: 'var(--ui-text)' }}>
 
       {/* ── SIDEBAR ──────────────────────────────────────────── */}
       {!mobile && (
         <aside style={{
           width: 220, flexShrink: 0,
-          position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+          height: '100vh', overflowY: 'auto',
           borderRight: BORDER, padding: '14px 0',
           background: 'var(--ui-sidebar-bg)',
         }}>
@@ -472,28 +478,29 @@ export function Docs() {
       )}
 
       {/* ── MAIN CONTENT ─────────────────────────────────────── */}
-      <main style={{ flex: 1, overflowX: 'hidden', paddingBottom: 120 }}>
+      <main ref={mainRef} style={{ flex: 1, height: '100vh', overflowY: 'auto', overflowX: 'hidden', paddingBottom: 120 }}>
 
         {/* Mobile top bar */}
         {mobile && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '14px 20px', borderBottom: BORDER,
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '14px 20px', paddingRight: 60, borderBottom: BORDER,
             background: 'var(--ui-sidebar-bg)',
             position: 'sticky', top: 0, zIndex: 10,
           }}>
+            <span style={{ fontFamily: fInter, fontSize: 14, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ui-text)' }}>
+              Kanopee / docs
+            </span>
             <button
               onClick={() => navigate('/')}
               style={{
                 fontFamily: fKarla, fontSize: 12.5, color: MUTED,
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                flexShrink: 0,
               }}
             >
-              Home
+              · Home
             </button>
-            <span style={{ fontFamily: fInter, fontSize: 14, fontWeight: 700, letterSpacing: '-0.03em', flex: 1, color: 'var(--ui-text)' }}>
-              Kanopee / docs
-            </span>
           </div>
         )}
 
