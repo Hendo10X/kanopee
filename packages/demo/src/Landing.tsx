@@ -5,7 +5,14 @@ import { Tree }       from '@phosphor-icons/react/dist/csr/Tree';
 import { Package }    from '@phosphor-icons/react/dist/csr/Package';
 import { HandHeart }  from '@phosphor-icons/react/dist/csr/HandHeart';
 import { Sliders }    from '@phosphor-icons/react/dist/csr/Sliders';
-import { CommentThread } from '@kanopee/react';
+import {
+  CommentThread,
+  CommentAvatar,
+  CommentHeader,
+  CommentBody,
+  CommentActions,
+  CommentReplyForm,
+} from '@kanopee/react';
 import type { RawComment } from '@kanopee/react';
 import { CodeBlock } from './CodeBlock.js';
 import { SEED_COMMENTS } from './seed.js';
@@ -59,6 +66,92 @@ const forest = buildTree(flatComments);
 // Flatten with depth metadata (respects collapse state)
 const items = flattenTree(forest, collapsedSet);
 // items[n] = { comment, depth, hasChildren, isCollapsed, childCount }`;
+
+// ─── component primitive snippets ─────────────────────────────────
+const SNIPPET_AVATAR = `import { CommentAvatar } from '@kanopee/react';
+
+<CommentAvatar author="Ada Lovelace" />
+<CommentAvatar author="Alan Turing" avatarUrl="/avatar.jpg" />`;
+
+const SNIPPET_HEADER = `import { CommentHeader } from '@kanopee/react';
+
+<CommentHeader
+  author="Ada Lovelace"
+  timestamp="2024-01-01T10:00:00Z"
+/>`;
+
+const SNIPPET_BODY = `import { CommentBody } from '@kanopee/react';
+
+<CommentBody>
+  The Analytical Engine weaves algebraic patterns,
+  just as the Jacquard loom weaves flowers.
+</CommentBody>`;
+
+const SNIPPET_ACTIONS = `import { CommentActions } from '@kanopee/react';
+
+<CommentActions
+  commentId="1"
+  likeCount={12}
+  isLiked={false}
+  hasChildren
+  childCount={3}
+  onLike={(id, liked) => handleLike(id, liked)}
+  onReplyClick={() => setReplying(true)}
+  onCollapse={(id, c) => handleCollapse(id, c)}
+/>`;
+
+const SNIPPET_REPLY_FORM = `import { CommentReplyForm } from '@kanopee/react';
+
+<CommentReplyForm
+  replyingTo="Ada Lovelace"
+  onSubmit={async (body) => {
+    await postReply(body);
+  }}
+  onCancel={() => setReplying(false)}
+/>`;
+
+const SNIPPET_COMPOSE = `import {
+  CommentAvatar, CommentHeader,
+  CommentBody, CommentActions,
+  CommentReplyForm, CommentThread,
+} from '@kanopee/react';
+import { useState } from 'react';
+
+function MyRow({ item, onLike, onReply }) {
+  const [replying, setReplying] = useState(false);
+  const { comment, depth } = item;
+  return (
+    <div style={{ paddingLeft: depth * 24, display: 'flex', gap: 10 }}>
+      <CommentAvatar author={comment.author} avatarUrl={comment.avatarUrl} />
+      <div>
+        <CommentHeader author={comment.author} timestamp={comment.timestamp} />
+        <CommentBody>{comment.body}</CommentBody>
+        <CommentActions
+          commentId={comment.id}
+          isLiked={comment.isLiked}
+          likeCount={comment.likeCount}
+          onLike={onLike}
+          onReplyClick={() => setReplying(true)}
+        />
+        {replying && (
+          <CommentReplyForm
+            replyingTo={comment.author}
+            onSubmit={(body) => { onReply(comment.id, body); setReplying(false); }}
+            onCancel={() => setReplying(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Pass it to CommentThread via renderItem
+<CommentThread
+  comments={comments}
+  renderItem={(item) => (
+    <MyRow item={item} onLike={handleLike} onReply={handleReply} />
+  )}
+/>`;
 
 const CSS_VARS = `/* Drop into your :root or any wrapper */
 :root {
@@ -121,10 +214,11 @@ export function Landing() {
   const [installTab, setInstallTab]       = useState<'react' | 'core'>('react');
   const [usageTab, setUsageTab]           = useState<'component' | 'core' | 'css'>('component');
   const [docsTab, setDocsTab]             = useState<'props' | 'type'>('props');
+  const [compTab, setCompTab]             = useState<'avatar'|'header'|'body'|'actions'|'reply'|'compose'>('avatar');
   const [playComments, setPlayComments]   = useState<RawComment[]>(SEED_COMMENTS);
 
   useEffect(() => {
-    const ids = ['hero', 'how-to-use', 'playground', 'docs'];
+    const ids = ['hero', 'how-to-use', 'components', 'playground', 'docs'];
     const obs = ids.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -301,6 +395,158 @@ export function Landing() {
 
       <Divider />
 
+      {/* ── COMPONENTS ───────────────────────────────────────── */}
+      <section id="components" style={sectionStyle}>
+        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
+          Composable primitives.
+        </h2>
+        <p style={{ fontFamily: fKarla, fontSize: 15, color: MUTED, lineHeight: 1.65, marginBottom: 32, maxWidth: 520 }}>
+          Use <code style={{ fontFamily: fMono, fontSize: 13 }}>{'<CommentThread />'}</code> out of the box, or pick individual pieces and compose exactly what you need.
+        </p>
+
+        <TabBar
+          tabs={[
+            { key: 'avatar',  label: 'CommentAvatar' },
+            { key: 'header',  label: 'CommentHeader' },
+            { key: 'body',    label: 'CommentBody' },
+            { key: 'actions', label: 'CommentActions' },
+            { key: 'reply',   label: 'CommentReplyForm' },
+            { key: 'compose', label: 'Compose your own' },
+          ]}
+          active={compTab}
+          onSelect={(k) => setCompTab(k as typeof compTab)}
+        />
+
+        <div style={{ marginTop: 24 }}>
+
+          {/* ── Avatar ── */}
+          {compTab === 'avatar' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="CommentAvatar" desc="Avatar circle with automatic initials fallback when no image is provided.">
+                  <div className="canopy-thread" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '4px 0' }}>
+                    <CommentAvatar author="Ada Lovelace" />
+                    <CommentAvatar author="Alan Turing" />
+                    <CommentAvatar author="Grace Hopper" />
+                    <CommentAvatar author="Linus Torvalds" avatarUrl="https://avatars.githubusercontent.com/u/1024025?v=4" />
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_AVATAR} />}
+            />
+          )}
+
+          {/* ── Header ── */}
+          {compTab === 'header' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="CommentHeader" desc="Author name and a human-readable relative timestamp. Updates automatically.">
+                  <div className="canopy-thread">
+                    <CommentHeader author="Ada Lovelace" timestamp={new Date(Date.now() - 3 * 60 * 60 * 1000)} />
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_HEADER} />}
+            />
+          )}
+
+          {/* ── Body ── */}
+          {compTab === 'body' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="CommentBody" desc="The comment text. Accepts any ReactNode — swap in your own markdown renderer as children.">
+                  <div className="canopy-thread">
+                    <CommentBody>
+                      The Analytical Engine weaves algebraic patterns, just as the Jacquard loom weaves flowers and leaves.
+                    </CommentBody>
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_BODY} />}
+            />
+          )}
+
+          {/* ── Actions ── */}
+          {compTab === 'actions' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="CommentActions" desc="Like, reply, and collapse controls. Each callback is optional — omit any you don't need.">
+                  <div className="canopy-thread">
+                    <CommentActions
+                      commentId="demo"
+                      likeCount={12}
+                      isLiked={false}
+                      hasChildren
+                      childCount={3}
+                      isCollapsed={false}
+                      onLike={() => {}}
+                      onReplyClick={() => {}}
+                      onCollapse={() => {}}
+                    />
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_ACTIONS} />}
+            />
+          )}
+
+          {/* ── ReplyForm ── */}
+          {compTab === 'reply' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="CommentReplyForm" desc="Inline textarea with async submit support. ⌘↵ submits, Escape cancels.">
+                  <div className="canopy-thread" style={{
+                    '--canopy-input-bg': 'rgba(0,0,0,0.03)',
+                    '--canopy-input-border': 'rgba(0,0,0,0.1)',
+                    '--canopy-input-border-focus': 'rgba(0,0,0,0.3)',
+                    '--canopy-submit-bg': '#0a0a0a',
+                    '--canopy-submit-color': '#fff',
+                  } as React.CSSProperties}>
+                    <CommentReplyForm
+                      replyingTo="Ada Lovelace"
+                      onSubmit={async () => {}}
+                      onCancel={() => {}}
+                    />
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_REPLY_FORM} />}
+            />
+          )}
+
+          {/* ── Compose ── */}
+          {compTab === 'compose' && (
+            <TwoCol mobile={mobile}
+              left={
+                <ComponentPreview label="Compose your own row" desc="Build a custom row from primitives. Pass it to CommentThread via renderItem — the tree, virtualisation, and collapse state still work.">
+                  <div className="canopy-thread" style={{ fontSize: 13, '--canopy-meta-color': 'rgba(0,0,0,0.4)' } as React.CSSProperties}>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                      <CommentAvatar author="Ada Lovelace" />
+                      <div style={{ flex: 1 }}>
+                        <CommentHeader author="Ada Lovelace" timestamp={new Date(Date.now() - 5 * 60 * 1000)} />
+                        <CommentBody>The Analytical Engine weaves algebraic patterns.</CommentBody>
+                        <CommentActions commentId="d1" likeCount={4} isLiked onLike={() => {}} onReplyClick={() => {}} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, paddingLeft: 24 }}>
+                      <CommentAvatar author="Alan Turing" />
+                      <div style={{ flex: 1 }}>
+                        <CommentHeader author="Alan Turing" timestamp={new Date(Date.now() - 2 * 60 * 1000)} />
+                        <CommentBody>Indeed — and computation may one day replicate the mind itself.</CommentBody>
+                        <CommentActions commentId="d2" likeCount={2} onLike={() => {}} onReplyClick={() => {}} />
+                      </div>
+                    </div>
+                  </div>
+                </ComponentPreview>
+              }
+              right={<CodeBlock code={SNIPPET_COMPOSE} />}
+            />
+          )}
+        </div>
+      </section>
+
+      <Divider />
+
       {/* ── PLAYGROUND ───────────────────────────────────────── */}
       <section id="playground" style={sectionStyle}>
         <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
@@ -407,6 +653,20 @@ export function Landing() {
 
 // ─── primitives ───────────────────────────────────────────────────
 
+function ComponentPreview({ label, desc, children }: { label: string; desc: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ marginBottom: 12 }}>
+        <span style={{ fontFamily: fMono, fontSize: 12, color: '#0a0a0a', fontWeight: 600 }}>{`<${label} />`}</span>
+        <p style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, lineHeight: 1.6, margin: '4px 0 0' }}>{desc}</p>
+      </div>
+      <div style={{ border: BORDER, borderRadius: 8, padding: '20px 16px', background: '#fafafa' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function Divider() {
   return <div style={{ height: 1, background: '#ebebeb', maxWidth: 820, margin: '0 auto' }} />;
 }
@@ -479,11 +739,12 @@ function PropTable({ rows, mobile }: { rows: { name: string; type: string; req: 
 
 function Dock({ active, mobile }: { active: string; mobile: boolean }) {
   const items = [
-    { key: 'hero',       label: 'Home',       href: '#hero' },
-    { key: 'how-to-use', label: 'How to use', href: '#how-to-use' },
-    { key: 'playground', label: 'Playground',  href: '#playground' },
-    { key: 'docs',       label: 'Docs',        href: '#docs' },
-    { key: 'github',     label: 'GitHub',      href: 'https://github.com/Hendo10X/kanopee', target: '_blank' as const },
+    { key: 'hero',        label: 'Home',        href: '#hero' },
+    { key: 'how-to-use',  label: 'How to use',  href: '#how-to-use' },
+    { key: 'components',  label: 'Components',  href: '#components' },
+    { key: 'playground',  label: 'Playground',  href: '#playground' },
+    { key: 'docs',        label: 'Docs',        href: '#docs' },
+    { key: 'github',      label: 'GitHub',      href: 'https://github.com/Hendo10X/kanopee', target: '_blank' as const },
   ];
   // On mobile hide "How to use" label, shorten
   const visibleItems = mobile

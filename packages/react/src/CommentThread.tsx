@@ -18,6 +18,14 @@ import { CommentRow, type CommentRowCallbacks } from './CommentRow.js';
 import './styles.css';
 
 export interface CommentThreadProps extends CommentRowCallbacks {
+  /**
+   * Custom row renderer. When provided, called instead of the default `<CommentRow>` for every item.
+   * Use this to compose your own row from Kanopee primitives.
+   *
+   * @example
+   * renderItem={(item) => <MyCustomRow item={item} />}
+   */
+  renderItem?: (item: FlatItem) => React.ReactNode;
   /** Flat array of comments. Only `id`, `parentId`, `author`, `body`, and `timestamp` are required. */
   comments: RawComment[];
 
@@ -87,6 +95,7 @@ export function CommentThread({
   onLike,
   onCollapse: onCollapseProp,
   onScrollEnd,
+  renderItem,
 }: CommentThreadProps) {
   // ── Collapse state (uncontrolled or controlled) ──────────────
   const [internalCollapsed, setInternalCollapsed] = useState<CollapseState>(
@@ -204,13 +213,15 @@ export function CommentThread({
                   data-index={vItem.index}
                   ref={virtualizer.measureElement}
                 >
-                  <CommentRow
-                    item={item}
-                    indentWidth={indentWidth}
-                    onReply={onReply}
-                    onLike={onLike}
-                    onCollapse={handleCollapse}
-                  />
+                  {renderItem ? renderItem(item) : (
+                    <CommentRow
+                      item={item}
+                      indentWidth={indentWidth}
+                      onReply={onReply}
+                      onLike={onLike}
+                      onCollapse={handleCollapse}
+                    />
+                  )}
                 </div>
               );
             })}
