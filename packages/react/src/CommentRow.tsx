@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import type { FlatItem } from '@canopy-ui/core';
+import type { FlatItem } from '@kanopee/core';
 import { CommentAvatar } from './CommentAvatar.js';
 import { CommentHeader } from './CommentHeader.js';
 import { CommentBody } from './CommentBody.js';

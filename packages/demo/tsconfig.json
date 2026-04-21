@@ -5,7 +5,11 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
-    "lib": ["ES2020", "DOM"]
+    "lib": ["ES2020", "DOM"],
+    "paths": {
+      "@kanopee/react": ["../react/src/index.ts"],
+      "@kanopee/core": ["../core/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

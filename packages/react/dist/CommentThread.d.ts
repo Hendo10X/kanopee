@@ -1,8 +1,16 @@
 import React, { CSSProperties } from 'react';
-import { type RawComment } from '@kanopee/core';
+import { type RawComment, type FlatItem } from '@kanopee/core';
 import { type CommentRowCallbacks } from './CommentRow.js';
 import './styles.css';
 export interface CommentThreadProps extends CommentRowCallbacks {
+    /**
+     * Custom row renderer. When provided, called instead of the default `<CommentRow>` for every item.
+     * Use this to compose your own row from Kanopee primitives.
+     *
+     * @example
+     * renderItem={(item) => <MyCustomRow item={item} />}
+     */
+    renderItem?: (item: FlatItem) => React.ReactNode;
     /** Flat array of comments. Only `id`, `parentId`, `author`, `body`, and `timestamp` are required. */
     comments: RawComment[];
     /**
@@ -48,5 +56,5 @@ export interface CommentThreadProps extends CommentRowCallbacks {
     /** Called when the user scrolls to the bottom (useful for pagination). */
     onScrollEnd?: () => void;
 }
-export declare function CommentThread({ comments, indentWidth, height, estimatedRowHeight, emptyState, className, style, defaultCollapsed, collapsed: collapsedProp, onReply, onLike, onCollapse: onCollapseProp, onScrollEnd, }: CommentThreadProps): import("react/jsx-runtime").JSX.Element;
+export declare function CommentThread({ comments, indentWidth, height, estimatedRowHeight, emptyState, className, style, defaultCollapsed, collapsed: collapsedProp, onReply, onLike, onCollapse: onCollapseProp, onScrollEnd, renderItem, }: CommentThreadProps): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=CommentThread.d.ts.map

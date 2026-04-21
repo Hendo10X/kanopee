@@ -12,6 +12,7 @@ import {
   flattenTree,
   buildNodeMap,
   type RawComment,
+  type FlatItem,
   type CollapseState,
 } from '@kanopee/core';
 import { CommentRow, type CommentRowCallbacks } from './CommentRow.js';

@@ -5,16 +5,11 @@ import { Tree }       from '@phosphor-icons/react/dist/csr/Tree';
 import { Package }    from '@phosphor-icons/react/dist/csr/Package';
 import { HandHeart }  from '@phosphor-icons/react/dist/csr/HandHeart';
 import { Sliders }    from '@phosphor-icons/react/dist/csr/Sliders';
-import {
-  CommentThread,
-  CommentAvatar,
-  CommentHeader,
-  CommentBody,
-  CommentActions,
-  CommentReplyForm,
-} from '@kanopee/react';
+import { CommentThread } from '@kanopee/react';
 import type { RawComment } from '@kanopee/react';
 import { CodeBlock } from './CodeBlock.js';
+import { navigate } from './router.js';
+import { useTheme } from './useTheme.js';
 import { SEED_COMMENTS } from './seed.js';
 
 // ─── fonts ────────────────────────────────────────────────────────
@@ -22,9 +17,9 @@ const fInter = "'Inter', sans-serif";
 const fKarla = "'Karla', sans-serif";
 const fMono  = "'Geist Mono', monospace";
 
-const BORDER = '1px solid #ebebeb';
-const MUTED  = '#666';
-const SUBTLE = '#f7f7f7';
+const BORDER = '1px solid var(--ui-border)';
+const MUTED  = 'var(--ui-muted)';
+const SUBTLE = 'var(--ui-surface)';
 
 // ─── responsive hook ──────────────────────────────────────────────
 function useIsMobile(bp = 640) {
@@ -66,92 +61,6 @@ const forest = buildTree(flatComments);
 // Flatten with depth metadata (respects collapse state)
 const items = flattenTree(forest, collapsedSet);
 // items[n] = { comment, depth, hasChildren, isCollapsed, childCount }`;
-
-// ─── component primitive snippets ─────────────────────────────────
-const SNIPPET_AVATAR = `import { CommentAvatar } from '@kanopee/react';
-
-<CommentAvatar author="Ada Lovelace" />
-<CommentAvatar author="Alan Turing" avatarUrl="/avatar.jpg" />`;
-
-const SNIPPET_HEADER = `import { CommentHeader } from '@kanopee/react';
-
-<CommentHeader
-  author="Ada Lovelace"
-  timestamp="2024-01-01T10:00:00Z"
-/>`;
-
-const SNIPPET_BODY = `import { CommentBody } from '@kanopee/react';
-
-<CommentBody>
-  The Analytical Engine weaves algebraic patterns,
-  just as the Jacquard loom weaves flowers.
-</CommentBody>`;
-
-const SNIPPET_ACTIONS = `import { CommentActions } from '@kanopee/react';
-
-<CommentActions
-  commentId="1"
-  likeCount={12}
-  isLiked={false}
-  hasChildren
-  childCount={3}
-  onLike={(id, liked) => handleLike(id, liked)}
-  onReplyClick={() => setReplying(true)}
-  onCollapse={(id, c) => handleCollapse(id, c)}
-/>`;
-
-const SNIPPET_REPLY_FORM = `import { CommentReplyForm } from '@kanopee/react';
-
-<CommentReplyForm
-  replyingTo="Ada Lovelace"
-  onSubmit={async (body) => {
-    await postReply(body);
-  }}
-  onCancel={() => setReplying(false)}
-/>`;
-
-const SNIPPET_COMPOSE = `import {
-  CommentAvatar, CommentHeader,
-  CommentBody, CommentActions,
-  CommentReplyForm, CommentThread,
-} from '@kanopee/react';
-import { useState } from 'react';
-
-function MyRow({ item, onLike, onReply }) {
-  const [replying, setReplying] = useState(false);
-  const { comment, depth } = item;
-  return (
-    <div style={{ paddingLeft: depth * 24, display: 'flex', gap: 10 }}>
-      <CommentAvatar author={comment.author} avatarUrl={comment.avatarUrl} />
-      <div>
-        <CommentHeader author={comment.author} timestamp={comment.timestamp} />
-        <CommentBody>{comment.body}</CommentBody>
-        <CommentActions
-          commentId={comment.id}
-          isLiked={comment.isLiked}
-          likeCount={comment.likeCount}
-          onLike={onLike}
-          onReplyClick={() => setReplying(true)}
-        />
-        {replying && (
-          <CommentReplyForm
-            replyingTo={comment.author}
-            onSubmit={(body) => { onReply(comment.id, body); setReplying(false); }}
-            onCancel={() => setReplying(false)}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Pass it to CommentThread via renderItem
-<CommentThread
-  comments={comments}
-  renderItem={(item) => (
-    <MyRow item={item} onLike={handleLike} onReply={handleReply} />
-  )}
-/>`;
 
 const CSS_VARS = `/* Drop into your :root or any wrapper */
 :root {
@@ -210,15 +119,15 @@ let nextId = 200;
 // ─── page ─────────────────────────────────────────────────────────
 export function Landing() {
   const mobile = useIsMobile();
+  const { isDark } = useTheme(); // isDark only — toggle lives in main.tsx
   const [activeSection, setActiveSection] = useState('hero');
   const [installTab, setInstallTab]       = useState<'react' | 'core'>('react');
   const [usageTab, setUsageTab]           = useState<'component' | 'core' | 'css'>('component');
   const [docsTab, setDocsTab]             = useState<'props' | 'type'>('props');
-  const [compTab, setCompTab]             = useState<'avatar'|'header'|'body'|'actions'|'reply'|'compose'>('avatar');
   const [playComments, setPlayComments]   = useState<RawComment[]>(SEED_COMMENTS);
 
   useEffect(() => {
-    const ids = ['hero', 'how-to-use', 'components', 'playground', 'docs'];
+    const ids = ['hero', 'how-to-use', 'playground', 'docs'];
     const obs = ids.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -249,8 +158,35 @@ export function Landing() {
   const sp = mobile ? '44px 20px' : '80px 24px'; // section padding
   const sectionStyle = { padding: sp, maxWidth: 820, margin: '0 auto', width: '100%', boxSizing: 'border-box' as const };
 
+  // dark-mode aware thread styles
+  const threadStyle: React.CSSProperties = isDark ? {
+    '--canopy-line-color': 'rgba(255,255,255,0.1)',
+    '--canopy-input-bg': 'rgba(255,255,255,0.05)',
+    '--canopy-input-border': 'rgba(255,255,255,0.12)',
+    '--canopy-input-border-focus': 'rgba(255,255,255,0.35)',
+    '--canopy-submit-bg': '#f5f5f5',
+    '--canopy-submit-color': '#0a0a0a',
+    '--canopy-meta-color': 'rgba(245,245,245,0.45)',
+    '--canopy-action-color': 'rgba(245,245,245,0.4)',
+    '--canopy-action-hover-color': '#f5f5f5',
+    '--canopy-font-family': fKarla,
+    '--canopy-indent-width': mobile ? '16px' : '24px',
+  } as React.CSSProperties : {
+    '--canopy-line-color': 'rgba(0,0,0,0.08)',
+    '--canopy-input-bg': 'rgba(0,0,0,0.03)',
+    '--canopy-input-border': 'rgba(0,0,0,0.1)',
+    '--canopy-input-border-focus': 'rgba(0,0,0,0.3)',
+    '--canopy-submit-bg': '#0a0a0a',
+    '--canopy-submit-color': '#fff',
+    '--canopy-meta-color': 'rgba(10,10,10,0.45)',
+    '--canopy-action-color': 'rgba(10,10,10,0.4)',
+    '--canopy-action-hover-color': '#0a0a0a',
+    '--canopy-font-family': fKarla,
+    '--canopy-indent-width': mobile ? '16px' : '24px',
+  } as React.CSSProperties;
+
   return (
-    <div style={{ paddingBottom: 100, overflowX: 'hidden', width: '100%' }}>
+    <div style={{ paddingBottom: 100, overflowX: 'hidden', width: '100%', background: 'var(--ui-bg)', color: 'var(--ui-text)' }}>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section id="hero" style={{
@@ -277,8 +213,8 @@ export function Landing() {
             {(['react', 'core'] as const).map((t) => (
               <button key={t} onClick={() => setInstallTab(t)} style={{
                 fontFamily: fMono, fontSize: 12, padding: '6px 12px', background: 'none', border: 'none',
-                borderBottom: installTab === t ? '2px solid #0a0a0a' : '2px solid transparent',
-                cursor: 'pointer', color: installTab === t ? '#0a0a0a' : MUTED,
+                borderBottom: installTab === t ? '2px solid var(--ui-text)' : '2px solid transparent',
+                cursor: 'pointer', color: installTab === t ? 'var(--ui-text)' : MUTED,
                 fontWeight: installTab === t ? 500 : 400, marginBottom: -1,
               }}>
                 {t === 'react' ? '@kanopee/react' : '@kanopee/core'}
@@ -288,11 +224,15 @@ export function Landing() {
           <CodeBlock code={installTab === 'react' ? INSTALL_REACT : INSTALL_CORE} />
 
           <div style={{ display: 'flex', gap: 20, marginTop: 20, flexWrap: 'wrap' }}>
-            {[{ label: 'Read the docs', href: '#docs' }, { label: 'Try the playground', href: '#playground' }].map(({ label, href }) => (
-              <a key={href} href={href} style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, textDecoration: 'none', borderBottom: '1px solid #d0d0d0', paddingBottom: 1 }}>
-                {label}
-              </a>
-            ))}
+            <button
+              onClick={() => navigate('/docs')}
+              style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, background: 'none', border: 'none', borderBottom: '1px solid var(--ui-border)', paddingBottom: 1, cursor: 'pointer', padding: 0 }}
+            >
+              Read the docs
+            </button>
+            <a href="#playground" style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, textDecoration: 'none', borderBottom: '1px solid var(--ui-border)', paddingBottom: 1 }}>
+              Try the playground
+            </a>
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 32, flexWrap: 'wrap' }}>
@@ -302,7 +242,7 @@ export function Landing() {
               { label: 'Vue',        color: '#10b981' },
               { label: 'Vanilla JS', color: '#d97706' },
             ].map(({ label }) => (
-              <span key={label} style={{ fontFamily: fMono, fontSize: 11, padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: 4, color: '#000' }}>
+              <span key={label} style={{ fontFamily: fMono, fontSize: 11, padding: '4px 10px', border: '1px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-text)' }}>
                 {label}
               </span>
             ))}
@@ -314,14 +254,14 @@ export function Landing() {
 
       {/* ── FEATURES ─────────────────────────────────────────── */}
       <section style={sectionStyle}>
-        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: mobile ? 32 : 48 }}>
+        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: mobile ? 32 : 48, color: 'var(--ui-text)' }}>
           Everything you need.<br />Nothing you don't.
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: mobile ? 28 : 36 }}>
           {FEATURES.map(({ Icon, color, title, desc }) => (
             <div key={title}>
               <Icon size={22} weight="duotone" color={color} style={{ display: 'block', marginBottom: 10 }} />
-              <h3 style={{ fontFamily: fInter, fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 5 }}>{title}</h3>
+              <h3 style={{ fontFamily: fInter, fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 5, color: 'var(--ui-text)' }}>{title}</h3>
               <p style={{ fontFamily: fKarla, fontSize: 13, lineHeight: 1.65, color: MUTED }}>{desc}</p>
             </div>
           ))}
@@ -332,7 +272,7 @@ export function Landing() {
 
       {/* ── HOW TO USE ───────────────────────────────────────── */}
       <section id="how-to-use" style={sectionStyle}>
-        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
+        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10, color: 'var(--ui-text)' }}>
           Three lines of code.
         </h2>
         <p style={{ fontFamily: fKarla, fontSize: 15, color: MUTED, lineHeight: 1.65, marginBottom: 28, maxWidth: 520 }}>
@@ -361,7 +301,7 @@ export function Landing() {
                       'Omit onCollapse to let Kanopee manage collapse state.',
                     ].map((tip) => (
                       <li key={tip} style={{ display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#ccc', flexShrink: 0 }}>—</span>
+                        <span style={{ color: 'var(--ui-faint)', flexShrink: 0 }}>—</span>
                         <span style={{ fontFamily: fKarla, fontSize: 13, lineHeight: 1.6, color: MUTED }}>{tip}</span>
                       </li>
                     ))}
@@ -395,161 +335,9 @@ export function Landing() {
 
       <Divider />
 
-      {/* ── COMPONENTS ───────────────────────────────────────── */}
-      <section id="components" style={sectionStyle}>
-        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
-          Composable primitives.
-        </h2>
-        <p style={{ fontFamily: fKarla, fontSize: 15, color: MUTED, lineHeight: 1.65, marginBottom: 32, maxWidth: 520 }}>
-          Use <code style={{ fontFamily: fMono, fontSize: 13 }}>{'<CommentThread />'}</code> out of the box, or pick individual pieces and compose exactly what you need.
-        </p>
-
-        <TabBar
-          tabs={[
-            { key: 'avatar',  label: 'CommentAvatar' },
-            { key: 'header',  label: 'CommentHeader' },
-            { key: 'body',    label: 'CommentBody' },
-            { key: 'actions', label: 'CommentActions' },
-            { key: 'reply',   label: 'CommentReplyForm' },
-            { key: 'compose', label: 'Compose your own' },
-          ]}
-          active={compTab}
-          onSelect={(k) => setCompTab(k as typeof compTab)}
-        />
-
-        <div style={{ marginTop: 24 }}>
-
-          {/* ── Avatar ── */}
-          {compTab === 'avatar' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="CommentAvatar" desc="Avatar circle with automatic initials fallback when no image is provided.">
-                  <div className="canopy-thread" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '4px 0' }}>
-                    <CommentAvatar author="Ada Lovelace" />
-                    <CommentAvatar author="Alan Turing" />
-                    <CommentAvatar author="Grace Hopper" />
-                    <CommentAvatar author="Linus Torvalds" avatarUrl="https://avatars.githubusercontent.com/u/1024025?v=4" />
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_AVATAR} />}
-            />
-          )}
-
-          {/* ── Header ── */}
-          {compTab === 'header' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="CommentHeader" desc="Author name and a human-readable relative timestamp. Updates automatically.">
-                  <div className="canopy-thread">
-                    <CommentHeader author="Ada Lovelace" timestamp={new Date(Date.now() - 3 * 60 * 60 * 1000)} />
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_HEADER} />}
-            />
-          )}
-
-          {/* ── Body ── */}
-          {compTab === 'body' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="CommentBody" desc="The comment text. Accepts any ReactNode — swap in your own markdown renderer as children.">
-                  <div className="canopy-thread">
-                    <CommentBody>
-                      The Analytical Engine weaves algebraic patterns, just as the Jacquard loom weaves flowers and leaves.
-                    </CommentBody>
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_BODY} />}
-            />
-          )}
-
-          {/* ── Actions ── */}
-          {compTab === 'actions' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="CommentActions" desc="Like, reply, and collapse controls. Each callback is optional — omit any you don't need.">
-                  <div className="canopy-thread">
-                    <CommentActions
-                      commentId="demo"
-                      likeCount={12}
-                      isLiked={false}
-                      hasChildren
-                      childCount={3}
-                      isCollapsed={false}
-                      onLike={() => {}}
-                      onReplyClick={() => {}}
-                      onCollapse={() => {}}
-                    />
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_ACTIONS} />}
-            />
-          )}
-
-          {/* ── ReplyForm ── */}
-          {compTab === 'reply' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="CommentReplyForm" desc="Inline textarea with async submit support. ⌘↵ submits, Escape cancels.">
-                  <div className="canopy-thread" style={{
-                    '--canopy-input-bg': 'rgba(0,0,0,0.03)',
-                    '--canopy-input-border': 'rgba(0,0,0,0.1)',
-                    '--canopy-input-border-focus': 'rgba(0,0,0,0.3)',
-                    '--canopy-submit-bg': '#0a0a0a',
-                    '--canopy-submit-color': '#fff',
-                  } as React.CSSProperties}>
-                    <CommentReplyForm
-                      replyingTo="Ada Lovelace"
-                      onSubmit={async () => {}}
-                      onCancel={() => {}}
-                    />
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_REPLY_FORM} />}
-            />
-          )}
-
-          {/* ── Compose ── */}
-          {compTab === 'compose' && (
-            <TwoCol mobile={mobile}
-              left={
-                <ComponentPreview label="Compose your own row" desc="Build a custom row from primitives. Pass it to CommentThread via renderItem — the tree, virtualisation, and collapse state still work.">
-                  <div className="canopy-thread" style={{ fontSize: 13, '--canopy-meta-color': 'rgba(0,0,0,0.4)' } as React.CSSProperties}>
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-                      <CommentAvatar author="Ada Lovelace" />
-                      <div style={{ flex: 1 }}>
-                        <CommentHeader author="Ada Lovelace" timestamp={new Date(Date.now() - 5 * 60 * 1000)} />
-                        <CommentBody>The Analytical Engine weaves algebraic patterns.</CommentBody>
-                        <CommentActions commentId="d1" likeCount={4} isLiked onLike={() => {}} onReplyClick={() => {}} />
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, paddingLeft: 24 }}>
-                      <CommentAvatar author="Alan Turing" />
-                      <div style={{ flex: 1 }}>
-                        <CommentHeader author="Alan Turing" timestamp={new Date(Date.now() - 2 * 60 * 1000)} />
-                        <CommentBody>Indeed — and computation may one day replicate the mind itself.</CommentBody>
-                        <CommentActions commentId="d2" likeCount={2} onLike={() => {}} onReplyClick={() => {}} />
-                      </div>
-                    </div>
-                  </div>
-                </ComponentPreview>
-              }
-              right={<CodeBlock code={SNIPPET_COMPOSE} />}
-            />
-          )}
-        </div>
-      </section>
-
-      <Divider />
-
       {/* ── PLAYGROUND ───────────────────────────────────────── */}
       <section id="playground" style={sectionStyle}>
-        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
+        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10, color: 'var(--ui-text)' }}>
           Live and interactive.
         </h2>
         <p style={{ fontFamily: fKarla, fontSize: 15, color: MUTED, lineHeight: 1.65, marginBottom: 28, maxWidth: 520 }}>
@@ -564,25 +352,13 @@ export function Landing() {
             ))}
             <span style={{ fontFamily: fMono, fontSize: 11, color: MUTED, marginLeft: 8 }}>canopy · live</span>
           </div>
-          <div style={{ padding: mobile ? 14 : 24, background: '#fff' }}>
+          <div style={{ padding: mobile ? 14 : 24, background: 'var(--ui-bg)' }}>
             <CommentThread
               comments={playComments}
               onReply={handleReply}
               onLike={handleLike}
               height={mobile ? 400 : 500}
-              style={{
-                '--canopy-line-color': 'rgba(0,0,0,0.08)',
-                '--canopy-input-bg': 'rgba(0,0,0,0.03)',
-                '--canopy-input-border': 'rgba(0,0,0,0.1)',
-                '--canopy-input-border-focus': 'rgba(0,0,0,0.3)',
-                '--canopy-submit-bg': '#0a0a0a',
-                '--canopy-submit-color': '#fff',
-                '--canopy-meta-color': 'rgba(10,10,10,0.45)',
-                '--canopy-action-color': 'rgba(10,10,10,0.4)',
-                '--canopy-action-hover-color': '#0a0a0a',
-                '--canopy-font-family': fKarla,
-                '--canopy-indent-width': mobile ? '16px' : '24px',
-              } as React.CSSProperties}
+              style={threadStyle}
             />
           </div>
         </div>
@@ -592,7 +368,7 @@ export function Landing() {
 
       {/* ── DOCS ─────────────────────────────────────────────── */}
       <section id="docs" style={sectionStyle}>
-        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10 }}>
+        <h2 style={{ fontFamily: fInter, fontSize: mobile ? 24 : 28, fontWeight: 700, letterSpacing: '-0.04em', marginBottom: 10, color: 'var(--ui-text)' }}>
           Full API.
         </h2>
         <p style={{ fontFamily: fKarla, fontSize: 15, color: MUTED, lineHeight: 1.65, marginBottom: 28, maxWidth: 520 }}>
@@ -608,7 +384,7 @@ export function Landing() {
           <PropTable rows={docsTab === 'props' ? PROPS : RAW_COMMENT} mobile={mobile} />
         </div>
 
-        <h3 style={{ fontFamily: fInter, fontSize: 16, fontWeight: 600, letterSpacing: '-0.03em', marginTop: 48, marginBottom: 14 }}>
+        <h3 style={{ fontFamily: fInter, fontSize: 16, fontWeight: 600, letterSpacing: '-0.03em', marginTop: 48, marginBottom: 14, color: 'var(--ui-text)' }}>
           CSS custom properties
         </h3>
         {/* Scrollable on mobile */}
@@ -634,10 +410,10 @@ export function Landing() {
             ].map(([name, def, desc], i, arr) => (
               <div key={name} style={{
                 display: 'grid', gridTemplateColumns: '220px 110px 1fr',
-                background: i % 2 === 0 ? '#fff' : SUBTLE,
+                background: i % 2 === 0 ? 'var(--ui-bg)' : SUBTLE,
                 borderBottom: i < arr.length - 1 ? BORDER : 'none',
               }}>
-                <div style={{ fontFamily: fMono, fontSize: 12, padding: '9px 14px', color: '#1a1a1a', borderRight: BORDER }}>{name}</div>
+                <div style={{ fontFamily: fMono, fontSize: 12, padding: '9px 14px', color: 'var(--ui-text)', borderRight: BORDER }}>{name}</div>
                 <div style={{ fontFamily: fMono, fontSize: 12, padding: '9px 14px', color: MUTED, borderRight: BORDER }}>{def}</div>
                 <div style={{ fontFamily: fKarla, fontSize: 12.5, padding: '9px 14px', color: MUTED, lineHeight: 1.5 }}>{desc}</div>
               </div>
@@ -653,22 +429,8 @@ export function Landing() {
 
 // ─── primitives ───────────────────────────────────────────────────
 
-function ComponentPreview({ label, desc, children }: { label: string; desc: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={{ marginBottom: 12 }}>
-        <span style={{ fontFamily: fMono, fontSize: 12, color: '#0a0a0a', fontWeight: 600 }}>{`<${label} />`}</span>
-        <p style={{ fontFamily: fKarla, fontSize: 13, color: MUTED, lineHeight: 1.6, margin: '4px 0 0' }}>{desc}</p>
-      </div>
-      <div style={{ border: BORDER, borderRadius: 8, padding: '20px 16px', background: '#fafafa' }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function Divider() {
-  return <div style={{ height: 1, background: '#ebebeb', maxWidth: 820, margin: '0 auto' }} />;
+  return <div style={{ height: 1, background: 'var(--ui-border)', maxWidth: 820, margin: '0 auto' }} />;
 }
 
 function TwoCol({ left, right, mobile }: { left: React.ReactNode; right: React.ReactNode; mobile: boolean }) {
@@ -692,8 +454,8 @@ function TabBar({ tabs, active, onSelect }: { tabs: { key: string; label: string
         <button key={key} onClick={() => onSelect(key)} style={{
           fontFamily: fKarla, fontSize: 13, fontWeight: active === key ? 600 : 400,
           padding: '8px 14px', background: 'none', border: 'none', whiteSpace: 'nowrap',
-          borderBottom: active === key ? '2px solid #0a0a0a' : '2px solid transparent',
-          cursor: 'pointer', color: active === key ? '#0a0a0a' : MUTED,
+          borderBottom: active === key ? '2px solid var(--ui-text)' : '2px solid transparent',
+          cursor: 'pointer', color: active === key ? 'var(--ui-text)' : MUTED,
           marginBottom: -1, transition: 'color 120ms', flexShrink: 0,
         }}>
           {label}
@@ -710,25 +472,25 @@ function PropTable({ rows, mobile }: { rows: { name: string; type: string; req: 
         {/* header */}
         <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 50px', background: SUBTLE, borderBottom: BORDER }}>
           {['Prop', 'Type / description', 'Req'].map((h) => (
-            <div key={h} style={{ fontFamily: fMono, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#aaa', padding: '8px 12px' }}>{h}</div>
+            <div key={h} style={{ fontFamily: fMono, fontSize: 10, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ui-faint)', padding: '8px 12px' }}>{h}</div>
           ))}
         </div>
         {rows.map((row, i) => (
           <div key={row.name} style={{
             display: 'grid', gridTemplateColumns: '160px 1fr 50px',
-            background: i % 2 === 0 ? '#fff' : SUBTLE,
+            background: i % 2 === 0 ? 'var(--ui-bg)' : SUBTLE,
             borderBottom: i < rows.length - 1 ? BORDER : 'none',
             alignItems: 'start',
           }}>
-            <div style={{ fontFamily: fMono, fontSize: 12, padding: '10px 12px', color: '#1a1a1a', borderRight: BORDER }}>{row.name}</div>
+            <div style={{ fontFamily: fMono, fontSize: 12, padding: '10px 12px', color: 'var(--ui-text)', borderRight: BORDER }}>{row.name}</div>
             <div style={{ padding: '10px 12px', borderRight: BORDER }}>
-              <div style={{ fontFamily: fMono, fontSize: 11, color: '#555', marginBottom: 3 }}>{row.type}</div>
+              <div style={{ fontFamily: fMono, fontSize: 11, color: 'var(--ui-muted)', marginBottom: 3 }}>{row.type}</div>
               <div style={{ fontFamily: fKarla, fontSize: 12.5, color: MUTED, lineHeight: 1.55 }}>{row.desc}</div>
             </div>
             <div style={{ padding: '10px 12px', textAlign: 'center' }}>
               {row.req
-                ? <span style={{ fontFamily: fMono, fontSize: 10, background: '#dbeafe', color: '#2563eb', borderRadius: 3, padding: '2px 5px', whiteSpace: 'nowrap' }}>yes</span>
-                : <span style={{ fontFamily: fMono, fontSize: 10, color: '#ccc' }}>—</span>}
+                ? <span style={{ fontFamily: fMono, fontSize: 10, background: 'var(--ui-req-bg)', color: 'var(--ui-req-text)', borderRadius: 3, padding: '2px 5px', whiteSpace: 'nowrap' }}>yes</span>
+                : <span style={{ fontFamily: fMono, fontSize: 10, color: 'var(--ui-faint)' }}>—</span>}
             </div>
           </div>
         ))}
@@ -738,25 +500,38 @@ function PropTable({ rows, mobile }: { rows: { name: string; type: string; req: 
 }
 
 function Dock({ active, mobile }: { active: string; mobile: boolean }) {
-  const items = [
-    { key: 'hero',        label: 'Home',        href: '#hero' },
-    { key: 'how-to-use',  label: 'How to use',  href: '#how-to-use' },
-    { key: 'components',  label: 'Components',  href: '#components' },
-    { key: 'playground',  label: 'Playground',  href: '#playground' },
-    { key: 'docs',        label: 'Docs',        href: '#docs' },
-    { key: 'github',      label: 'GitHub',      href: 'https://github.com/Hendo10X/kanopee', target: '_blank' as const },
+  const hashItems = [
+    { key: 'hero',       label: 'Home',       href: '#hero' },
+    { key: 'how-to-use', label: 'How to use', href: '#how-to-use' },
+    { key: 'playground', label: 'Playground', href: '#playground' },
   ];
-  // On mobile hide "How to use" label, shorten
-  const visibleItems = mobile
-    ? items.filter(i => i.key !== 'how-to-use').concat()
-    : items;
+
+  const linkStyle = (isActive: boolean): React.CSSProperties => ({
+    fontFamily: fKarla, fontSize: mobile ? 12 : 13,
+    fontWeight: isActive ? 600 : 400,
+    padding: mobile ? '5px 10px' : '6px 14px',
+    borderRadius: 100,
+    background: isActive ? 'var(--ui-btn-bg)' : 'transparent',
+    color: isActive ? 'var(--ui-btn-text)' : MUTED,
+    textDecoration: 'none', whiteSpace: 'nowrap',
+    transition: 'background 150ms, color 150ms',
+    flexShrink: 0,
+    display: 'inline-block',
+  });
+
+  const btnStyle = (isActive: boolean): React.CSSProperties => ({
+    ...linkStyle(isActive),
+    display: 'inline-block',
+    background: isActive ? 'var(--ui-btn-bg)' : 'transparent',
+    border: 'none', cursor: 'pointer',
+  });
 
   return (
     <nav style={{
       position: 'fixed', bottom: mobile ? 16 : 28,
       left: '50%', transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 2,
-      background: 'rgba(255,255,255,0.92)',
+      background: 'var(--ui-bg)',
       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       border: BORDER, borderRadius: 100,
       padding: mobile ? '5px 6px' : '6px 8px',
@@ -764,24 +539,28 @@ function Dock({ active, mobile }: { active: string; mobile: boolean }) {
       maxWidth: 'calc(100vw - 32px)',
       overflowX: 'auto',
     }}>
-      {visibleItems.map(({ key, label, href, target }) => {
-        const isActive = active === key;
-        return (
-          <a key={key} href={href} target={target} rel={target === '_blank' ? 'noopener noreferrer' : undefined} style={{
-            fontFamily: fKarla, fontSize: mobile ? 12 : 13,
-            fontWeight: isActive ? 600 : 400,
-            padding: mobile ? '5px 10px' : '6px 14px',
-            borderRadius: 100,
-            background: isActive ? '#0a0a0a' : 'transparent',
-            color: isActive ? '#fff' : MUTED,
-            textDecoration: 'none', whiteSpace: 'nowrap',
-            transition: 'background 150ms, color 150ms',
-            flexShrink: 0,
-          }}>
+      {hashItems
+        .filter(({ key }) => !(mobile && key === 'how-to-use'))
+        .map(({ key, label, href }) => (
+          <a key={key} href={href} style={linkStyle(active === key)}>
             {label}
           </a>
-        );
-      })}
+        ))}
+
+      {/* Docs — SPA navigate */}
+      <button onClick={() => navigate('/docs')} style={btnStyle(false)}>
+        Docs
+      </button>
+
+      {/* GitHub */}
+      <a
+        href="https://github.com/Hendo10X/kanopee"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={linkStyle(false)}
+      >
+        GitHub
+      </a>
     </nav>
   );
 }

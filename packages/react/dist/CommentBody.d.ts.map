@@ -1,0 +1,1 @@
+{"version":3,"file":"CommentBody.d.ts","sourceRoot":"","sources":["../src/CommentBody.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAE1B,MAAM,WAAW,gBAAgB;IAC/B,wEAAwE;IACxE,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,SAAS,CAAC,EAAE,MAAM,CAAC;CACpB;AAED,wBAAgB,WAAW,CAAC,EAAE,QAAQ,EAAE,SAAS,EAAE,EAAE,gBAAgB,2CAMpE"}

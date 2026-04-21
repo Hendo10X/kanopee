@@ -1,6 +1,6 @@
 {
   "name": "@kanopee/core",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -12,8 +12,12 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build && tsc --emitDeclarationOnly --declarationDir dist",
     "typecheck": "tsc --noEmit",

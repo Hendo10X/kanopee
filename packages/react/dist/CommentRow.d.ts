@@ -1,7 +1,7 @@
 import React from 'react';
 import type { FlatItem } from '@kanopee/core';
 export interface CommentRowCallbacks {
-    onReply?: (parentId: string, body: string) => void;
+    onReply?: (parentId: string, body: string) => void | Promise<void>;
     onLike?: (commentId: string, isLiked: boolean) => void;
     onCollapse?: (commentId: string, collapsed: boolean) => void;
 }
