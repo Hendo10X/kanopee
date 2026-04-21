@@ -483,7 +483,7 @@ function Dock({ active, mobile }: { active: string; mobile: boolean }) {
     { key: 'how-to-use', label: 'How to use', href: '#how-to-use' },
     { key: 'playground', label: 'Playground',  href: '#playground' },
     { key: 'docs',       label: 'Docs',        href: '#docs' },
-    { key: 'github',     label: 'GitHub',      href: 'https://github.com', target: '_blank' as const },
+    { key: 'github',     label: 'GitHub',      href: 'https://github.com/Hendo10X/kanopee', target: '_blank' as const },
   ];
   // On mobile hide "How to use" label, shorten
   const visibleItems = mobile
