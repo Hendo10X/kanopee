@@ -488,19 +488,23 @@ export function Docs() {
             background: 'var(--ui-sidebar-bg)',
             position: 'sticky', top: 0, zIndex: 10,
           }}>
+            <button
+              onClick={() => navigate('/')}
+              aria-label="Back to home"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, flexShrink: 0,
+                background: 'var(--ui-surface)', border: BORDER,
+                borderRadius: 7, cursor: 'pointer', color: MUTED,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
             <span style={{ fontFamily: fInter, fontSize: 14, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--ui-text)' }}>
               Kanopee / docs
             </span>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                fontFamily: fKarla, fontSize: 12.5, color: MUTED,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                flexShrink: 0,
-              }}
-            >
-              · Home
-            </button>
           </div>
         )}
 
